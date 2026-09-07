@@ -1,0 +1,1784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>StudyHub — Notes, Quizzes & Flashcards</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2312161F'/%3E%3Cpath d='M50,38 C34,31 24,38 20,51 C24,64 34,69 50,66 Z' fill='%23D7DCE6'/%3E%3Cpath d='M50,38 C66,31 76,38 80,51 C76,64 66,69 50,66 Z' fill='%23F3F5F8'/%3E%3Cpath d='M50,38 C51,49 51,56 50,66' fill='none' stroke='%2312161F' stroke-width='2.4' stroke-linecap='round'/%3E%3Cpath d='M71,22 C72,27 74,30 78,32 C74,34 72,37 71,42 C70,37 68,34 64,32 C68,30 70,27 71,22 Z' fill='%23F4B942'/%3E%3Ccircle cx='27' cy='68' r='3' fill='%234ECDC4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#12161F;
+    --surface:#1B2130;
+    --surface-alt:#232B3D;
+    --border:#2E3648;
+    --accent:#F4B942;
+    --accent-ink:#3A2B04;
+    --accent-2:#4ECDC4;
+    --danger:#E8604C;
+    --text:#EDEFF4;
+    --text-muted:#8993A6;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;}
+  html,body{height:100%;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(244,185,66,.05), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(78,205,196,.05), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.brand{font-family:'Fraunces',serif;}
+  button{font-family:inherit;}
+  a{color:inherit;}
+  ::selection{background:var(--accent);color:var(--accent-ink);}
+
+  /* ---------- App shell ---------- */
+  #app{display:flex;min-height:100vh;}
+
+  /* Sidebar (desktop) */
+  #sidebar{
+    width:230px;flex-shrink:0;
+    border-right:1px solid var(--border);
+    padding:24px 16px;
+    display:flex;flex-direction:column;
+    gap:4px;
+  }
+  #sidebar .brand{
+    font-size:22px;font-weight:600;margin:0 8px 24px;
+    display:flex;align-items:baseline;gap:6px;
+  }
+  #sidebar .brand span{color:var(--accent);}
+  .nav-item{
+    display:flex;align-items:center;gap:10px;
+    padding:10px 12px;border-radius:8px;
+    color:var(--text-muted);cursor:pointer;
+    font-size:14px;font-weight:500;
+    border:none;background:none;width:100%;text-align:left;
+    position:relative;
+    transition:background .2s ease,color .2s ease,transform .15s ease;
+  }
+  .nav-item::before{
+    content:"";position:absolute;left:-16px;top:50%;
+    width:3px;height:60%;background:var(--accent);border-radius:0 3px 3px 0;
+    transform:translateY(-50%) scaleY(0);transition:transform .25s cubic-bezier(.34,1.56,.64,1);
+    transform-origin:center;
+  }
+  .nav-item.active::before{transform:translateY(-50%) scaleY(1);}
+  .nav-item:active{transform:scale(.98);}
+  .nav-item:hover{background:var(--surface);color:var(--text);}
+  .nav-item.active{background:var(--surface-alt);color:var(--accent);}
+  .nav-icon{width:18px;text-align:center;font-size:15px;transition:transform .2s ease;}
+  .nav-item.active .nav-icon{transform:scale(1.12);}
+  #sidebar-footer{margin-top:auto;font-size:11px;color:var(--text-muted);padding:0 12px;line-height:1.5;}
+
+  /* Main content */
+  #main{flex:1;min-width:0;padding:28px 32px 100px;max-width:980px;}
+
+  #topbar{display:flex;align-items:center;justify-content:flex-end;gap:12px;margin-bottom:22px;}
+  .topbar-brand{display:none;font-family:'Fraunces',serif;font-size:19px;font-weight:600;margin-right:auto;}
+  .topbar-brand span{color:var(--accent);}
+  .account-menu{position:relative;}
+  .account-trigger{
+    display:flex;align-items:center;gap:8px;
+    background:var(--surface);border:1px solid var(--border);border-radius:99px;
+    padding:5px 12px 5px 5px;cursor:pointer;color:var(--text);font-size:13px;font-weight:600;
+    transition:border-color .15s ease,transform .12s ease;
+  }
+  .account-trigger:hover{border-color:#3d4761;}
+  .account-trigger:active{transform:scale(.97);}
+  .account-avatar{
+    width:26px;height:26px;border-radius:50%;flex-shrink:0;
+    background:var(--accent);color:var(--accent-ink);
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:700;font-family:'Fraunces',serif;
+  }
+  .account-email-text{max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .account-caret{opacity:.55;font-size:10px;transition:transform .2s ease;}
+  .account-menu.open .account-caret{transform:rotate(180deg);}
+  .account-dropdown{
+    position:absolute;top:calc(100% + 8px);right:0;min-width:200px;
+    background:var(--surface);border:1px solid var(--border);border-radius:12px;
+    padding:6px;box-shadow:0 12px 32px rgba(0,0,0,.35);
+    display:none;z-index:70;animation:modalIn .18s cubic-bezier(.16,1,.3,1);
+  }
+  .account-menu.open .account-dropdown{display:block;}
+  .account-dropdown-email{
+    padding:8px 10px 10px;font-size:11.5px;color:var(--text-muted);
+    border-bottom:1px solid var(--border);margin-bottom:4px;word-break:break-all;
+  }
+  .account-dropdown-item{
+    width:100%;text-align:left;background:none;border:none;color:var(--text);
+    padding:9px 10px;border-radius:7px;font-size:13.5px;cursor:pointer;font-family:inherit;
+    transition:background .15s ease;
+  }
+  .account-dropdown-item:hover{background:var(--surface-alt);}
+  .view{display:none;}
+  .view.active{display:block;animation:viewIn .38s cubic-bezier(.16,1,.3,1);}
+  @keyframes viewIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+  .page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;gap:12px;flex-wrap:wrap;}
+  .page-head h1{font-size:26px;margin:0;font-weight:600;}
+  .page-sub{color:var(--text-muted);font-size:13.5px;margin-top:4px;}
+
+  /* Bottom tab bar (mobile) */
+  #tabbar{display:none;}
+
+  /* ---------- Components ---------- */
+  .btn{
+    display:inline-flex;align-items:center;gap:6px;
+    background:var(--surface-alt);color:var(--text);
+    border:1px solid var(--border);
+    padding:9px 16px;border-radius:8px;
+    font-size:13.5px;font-weight:600;cursor:pointer;
+    transition:transform .12s ease,border-color .15s ease,background .15s ease,box-shadow .15s ease,filter .15s ease;
+  }
+  .btn:hover{border-color:#3d4761;transform:translateY(-1px);}
+  .btn:active{transform:translateY(0) scale(.96);}
+  .btn-primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);box-shadow:0 2px 12px rgba(244,185,66,.22);}
+  .btn-primary:hover{filter:brightness(1.06);box-shadow:0 4px 16px rgba(244,185,66,.32);}
+  .btn-ghost{background:none;border:1px solid var(--border);}
+  .btn-danger{background:none;border:1px solid var(--danger);color:var(--danger);}
+  .btn-sm{padding:6px 11px;font-size:12.5px;}
+  .btn:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:16px;
+    transition:border-color .2s ease;
+  }
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px;}
+  .stat-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;
+    transition:transform .18s ease,border-color .18s ease;
+    animation:viewIn .4s cubic-bezier(.16,1,.3,1) backwards;
+  }
+  .stat-card:hover{transform:translateY(-3px);border-color:#3d4761;}
+  .stat-card:nth-child(1){animation-delay:.02s;}
+  .stat-card:nth-child(2){animation-delay:.07s;}
+  .stat-card:nth-child(3){animation-delay:.12s;}
+  .stat-card:nth-child(4){animation-delay:.17s;}
+  .stat-num{font-family:'Fraunces',serif;font-size:28px;font-weight:600;line-height:1;transition:color .2s ease;}
+  .stat-label{color:var(--text-muted);font-size:12px;margin-top:6px;}
+
+  .list{display:flex;flex-direction:column;gap:8px;}
+  .row-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:14px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;
+    transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+  }
+  .row-card:hover{border-color:#3d4761;transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.28);}
+  .row-card:active{transform:translateY(0) scale(.99);}
+  .row-title{font-weight:600;font-size:14.5px;}
+  .row-meta{color:var(--text-muted);font-size:12px;margin-top:3px;}
+  .tag{display:inline-block;background:var(--surface-alt);color:var(--text-muted);font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid var(--border);}
+  .row-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+  .row-delete-btn{
+    background:none;border:1px solid var(--border);color:var(--text-muted);
+    width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:13px;
+    display:flex;align-items:center;justify-content:center;
+    transition:border-color .15s ease,color .15s ease,background .15s ease;
+  }
+  .row-delete-btn:hover{border-color:var(--danger);color:var(--danger);background:rgba(232,96,76,.08);}
+
+  .empty{
+    text-align:center;padding:48px 20px;color:var(--text-muted);
+    border:1px dashed var(--border);border-radius:var(--radius);font-size:13.5px;
+  }
+  .empty strong{display:block;color:var(--text);font-size:15px;margin-bottom:6px;font-family:'Fraunces',serif;font-weight:600;}
+
+  input[type=text],input[type=password],textarea,select{
+    width:100%;background:var(--surface-alt);border:1px solid var(--border);
+    color:var(--text);padding:10px 12px;border-radius:8px;font-size:14px;font-family:inherit;
+    transition:border-color .15s ease,box-shadow .15s ease;
+  }
+  input[type=text]:focus,input[type=password]:focus,textarea:focus,select:focus{
+    outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(244,185,66,.14);
+  }
+  textarea{resize:vertical;min-height:120px;line-height:1.55;}
+  label{font-size:12.5px;color:var(--text-muted);font-weight:600;display:block;margin-bottom:6px;}
+  .field{margin-bottom:16px;}
+
+  .modal-backdrop{
+    position:fixed;inset:0;background:rgba(6,8,13,.6);
+    display:none;align-items:flex-start;justify-content:center;
+    padding:5vh 16px;overflow-y:auto;z-index:50;
+  }
+  .modal-backdrop.open{display:flex;animation:backdropIn .2s ease;}
+  @keyframes backdropIn{from{opacity:0;}to{opacity:1;}}
+  .modal{
+    background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;max-width:560px;width:100%;
+    animation:modalIn .28s cubic-bezier(.16,1,.3,1);
+  }
+  @keyframes modalIn{from{opacity:0;transform:translateY(16px) scale(.97);}to{opacity:1;transform:translateY(0) scale(1);}}
+  .modal h2{margin:0 0 16px;font-size:19px;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;}
+  .dropzone{
+    border:1.5px dashed var(--border);border-radius:10px;
+    padding:22px 16px;text-align:center;font-size:13px;color:var(--text-muted);
+    cursor:pointer;transition:border-color .15s,background .15s,transform .15s;
+  }
+  .dropzone:hover, .dropzone-over{border-color:var(--accent);background:rgba(244,185,66,.06);transform:scale(1.01);}
+
+  .gen-loading{display:flex;align-items:center;gap:10px;color:var(--text-muted);}
+  .spinner{
+    width:16px;height:16px;border-radius:50%;flex-shrink:0;
+    border:2px solid var(--border);border-top-color:var(--accent);
+    animation:spin .7s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .toast{
+    position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(10px);
+    background:var(--surface-alt);border:1px solid var(--border);
+    padding:10px 18px;border-radius:99px;font-size:13px;
+    opacity:0;pointer-events:none;transition:opacity .25s ease,transform .25s ease;z-index:80;
+    box-shadow:0 6px 20px rgba(0,0,0,.3);
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* Quiz taking */
+  .qz-progress{font-size:12px;color:var(--text-muted);margin-bottom:10px;}
+  .qz-question{font-size:17px;font-weight:600;margin-bottom:16px;font-family:'Fraunces',serif;}
+  .qz-opt{
+    display:block;width:100%;text-align:left;background:var(--surface-alt);
+    border:1px solid var(--border);color:var(--text);padding:12px 14px;border-radius:8px;
+    margin-bottom:8px;cursor:pointer;font-size:14px;
+    transition:transform .12s ease,border-color .15s ease,background .2s ease;
+  }
+  .qz-opt:hover{border-color:#3d4761;transform:translateX(2px);}
+  .qz-opt.correct{border-color:var(--accent-2);background:rgba(78,205,196,.12);animation:popIn .3s ease;}
+  .qz-opt.wrong{border-color:var(--danger);background:rgba(232,96,76,.12);animation:shake .3s ease;}
+  @keyframes popIn{0%{transform:scale(1);}50%{transform:scale(1.02);}100%{transform:scale(1);}}
+  @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-4px);}75%{transform:translateX(4px);}}
+
+  /* Flashcards */
+  .fc-stage{display:flex;flex-direction:column;align-items:center;gap:16px;padding:20px 0;}
+  .fc-card-wrap{position:relative;width:100%;max-width:420px;min-height:220px;perspective:1200px;}
+  .fc-flip{
+    position:relative;width:100%;height:100%;min-height:220px;
+    transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,.15,.2,1);cursor:pointer;
+  }
+  .fc-flip.flipped{transform:rotateY(180deg);}
+  .fc-face{
+    position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+    background:var(--surface);border:1px solid var(--border);border-radius:14px;
+    display:flex;align-items:center;justify-content:center;text-align:center;
+    padding:28px;font-size:16px;line-height:1.5;
+  }
+  .fc-face-back{transform:rotateY(180deg);border-color:var(--accent-2);}
+  .fc-face-label{position:absolute;top:12px;left:16px;font-size:10.5px;letter-spacing:.03em;color:var(--text-muted);}
+  .fc-controls{display:flex;gap:10px;}
+
+  #settings-status{font-size:12.5px;margin-top:8px;}
+  .usage-bar-label{font-size:11.5px;color:var(--text-muted);margin-bottom:8px;letter-spacing:.02em;text-transform:uppercase;font-weight:600;}
+  .usage-bar-track{
+    width:100%;height:18px;border-radius:99px;background:var(--surface-alt);
+    overflow:hidden;position:relative;border:1px solid var(--border);
+  }
+  .usage-bar-fill{
+    height:100%;border-radius:99px;
+    background:linear-gradient(90deg,var(--accent-2),var(--accent));
+    transition:width .5s cubic-bezier(.16,1,.3,1),background .4s ease;
+    position:relative;overflow:hidden;
+  }
+  .usage-bar-fill.usage-mid{background:linear-gradient(90deg,var(--accent),#f0a23a);}
+  .usage-bar-fill.usage-high{background:linear-gradient(90deg,#f0a23a,var(--danger));}
+  .usage-bar-fill::after{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,.25), transparent);
+    width:40%;animation:shimmer 2.2s ease-in-out infinite;
+  }
+  @keyframes shimmer{0%{transform:translateX(-120%);}100%{transform:translateX(280%);}}
+  .status-ok{color:var(--accent-2);}
+  .status-bad{color:var(--danger);}
+
+  .split{display:grid;grid-template-columns:1fr;gap:20px;}
+  @media(min-width:860px){
+    .split.notes-split{grid-template-columns:280px 1fr;}
+  }
+  .notes-sidebar-list{display:flex;flex-direction:column;gap:6px;max-height:70vh;overflow:auto;}
+
+  /* ---------- Note editor: styled like an actual page ---------- */
+  .note-editor-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:14px;
+    padding:22px 24px;position:relative;overflow:hidden;
+  }
+  .note-editor-card::before{
+    content:"";position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));
+  }
+  #note-title{
+    font-family:'Fraunces',serif;font-size:24px;font-weight:600;
+    background:none;border:none;border-bottom:1px solid var(--border);
+    padding:2px 0 10px;width:100%;color:var(--text);border-radius:0;
+  }
+  #note-title:focus{outline:none;border-bottom-color:var(--accent);box-shadow:none;}
+  #note-subject{
+    display:inline-block;width:auto;min-width:140px;
+    background:var(--surface-alt);border:1px solid var(--border);border-radius:99px;
+    padding:5px 14px;font-size:12px;font-weight:600;color:var(--text-muted);
+  }
+  .note-content-wrap{position:relative;}
+  #note-content{
+    width:100%;min-height:320px;resize:vertical;
+    background-color:var(--surface-alt);
+    background-image:
+      repeating-linear-gradient(to bottom, transparent, transparent 26px, rgba(255,255,255,.045) 27px),
+      linear-gradient(to right, transparent 43px, rgba(232,96,76,.3) 43px, rgba(232,96,76,.3) 44px, transparent 44px);
+    line-height:27px;padding:12px 18px 12px 58px;font-size:14.5px;
+    border:1px solid var(--border);border-radius:10px;color:var(--text);
+    font-family:'Inter',system-ui,sans-serif;
+  }
+  #note-content:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(244,185,66,.14);}
+
+  .note-view-toggle{display:flex;background:var(--surface-alt);border:1px solid var(--border);border-radius:8px;padding:2px;flex-shrink:0;}
+  .note-view-toggle-btn{
+    background:none;border:none;color:var(--text-muted);font-size:12.5px;font-weight:600;
+    padding:6px 14px;border-radius:6px;cursor:pointer;transition:background .15s ease,color .15s ease;
+  }
+  .note-view-toggle-btn.active{background:var(--surface);color:var(--text);}
+
+  .note-preview{
+    min-height:320px;max-height:none;overflow:auto;
+    background-color:var(--surface-alt);border:1px solid var(--border);border-radius:10px;
+    padding:16px 20px;color:var(--text);line-height:1.7;font-size:14.5px;
+  }
+  .note-preview p{margin:0 0 14px;white-space:pre-wrap;}
+  .note-preview table{
+    width:100%;border-collapse:collapse;margin:6px 0 18px;font-size:13.5px;
+    background:var(--surface);border-radius:8px;overflow:hidden;
+  }
+  .note-preview th,.note-preview td{
+    border:1px solid var(--border);padding:8px 12px;text-align:left;
+  }
+  .note-preview th{background:var(--surface-alt);font-weight:700;color:var(--accent);}
+  .note-preview tr:nth-child(even) td{background:rgba(255,255,255,.02);}
+  .note-preview h3,.note-preview h4,.note-preview h5{font-family:'Fraunces',serif;color:var(--text);margin:18px 0 8px;line-height:1.3;}
+  .note-preview h3{font-size:19px;} .note-preview h4{font-size:16.5px;} .note-preview h5{font-size:14.5px;}
+  .note-preview ul,.note-preview ol{margin:0 0 14px;padding-left:22px;}
+  .note-preview li{margin-bottom:5px;}
+  .note-preview strong{color:var(--accent);font-weight:700;}
+  .note-preview em{color:var(--accent-2);font-style:italic;}
+  .note-preview code{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:12.5px;font-family:monospace;}
+  .note-mini{padding:10px 12px 10px 16px;border-radius:8px;cursor:pointer;border:1px solid transparent;position:relative;transition:background .15s ease;}
+  .note-mini::before{content:"";position:absolute;left:4px;top:9px;bottom:9px;width:3px;border-radius:3px;background:var(--note-color, var(--accent));}
+  .note-mini:hover{background:var(--surface-alt);}
+  .note-mini.active{background:var(--surface-alt);border-color:var(--border);}
+  .note-mini-title{font-size:13.5px;font-weight:600;font-family:'Fraunces',serif;}
+  .note-mini-meta{font-size:11px;color:var(--text-muted);margin-top:3px;display:flex;align-items:center;gap:6px;}
+  .note-mini-chip{background:var(--surface-alt);border:1px solid var(--border);border-radius:99px;padding:1px 8px;font-size:10.5px;}
+
+  /* ---------- Responsive: mobile layout ---------- */
+  @media (max-width:767px){
+    #sidebar{display:none;}
+    .topbar-brand{display:block;}
+    #main{padding:20px 16px 90px;max-width:100%;}
+    #tabbar{
+      display:flex;position:fixed;bottom:0;left:0;right:0;
+      background:var(--surface);border-top:1px solid var(--border);
+      padding:8px 4px calc(8px + env(safe-area-inset-bottom));
+      z-index:40;
+    }
+    .tab-item{
+      flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+      background:none;border:none;color:var(--text-muted);font-size:10.5px;padding:6px 2px;
+      transition:color .2s ease;
+    }
+    .tab-item:active{transform:scale(.94);}
+    .tab-item.active{color:var(--accent);}
+    .tab-icon{font-size:18px;display:inline-block;transition:transform .3s cubic-bezier(.34,1.56,.64,1);}
+    .tab-item.active .tab-icon{transform:translateY(-2px) scale(1.15);}
+    .tab-item::after{
+      content:"";display:block;width:4px;height:4px;border-radius:50%;
+      background:var(--accent);margin-top:1px;opacity:0;transform:scale(.4);
+      transition:opacity .2s ease,transform .2s ease;
+    }
+    .tab-item.active::after{opacity:1;transform:scale(1);}
+    .split.notes-split{grid-template-columns:1fr;}
+  }
+
+  /* ---------- Auth gate ---------- */
+  #app{display:none;}
+  #auth-gate{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    padding:24px;
+  }
+  .auth-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:16px;
+    padding:36px 32px;max-width:380px;width:100%;text-align:center;
+    animation:modalIn .35s cubic-bezier(.16,1,.3,1);
+  }
+  .auth-card .brand{font-size:26px;margin-bottom:4px;}
+  .auth-card .brand span{color:var(--accent);}
+  .auth-sub{color:var(--text-muted);font-size:13.5px;margin-bottom:26px;}
+  .auth-btn{
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    width:100%;padding:11px 16px;border-radius:9px;font-size:14px;font-weight:600;
+    cursor:pointer;margin-bottom:10px;border:1px solid var(--border);
+    background:var(--surface-alt);color:var(--text);
+    transition:transform .12s ease,border-color .15s ease;
+  }
+  .auth-btn:hover{border-color:#3d4761;transform:translateY(-1px);}
+  .auth-btn:active{transform:translateY(0) scale(.97);}
+  .auth-divider{display:flex;align-items:center;gap:10px;color:var(--text-muted);font-size:11.5px;margin:18px 0;}
+  .auth-divider::before,.auth-divider::after{content:"";flex:1;height:1px;background:var(--border);}
+  .auth-status{font-size:12.5px;min-height:18px;margin-top:6px;}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+
+<!-- ====== FILL THESE IN — see SUPABASE_SETUP.md ====== -->
+<script>
+  window.__SUPABASE_URL__ = "https://cemtccnxioaztyffhijr.supabase.co";
+  window.__SUPABASE_ANON_KEY__ = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNlbXRjY254aW9henR5ZmZoaWpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg2MDUxNzQsImV4cCI6MjEwNDE4MTE3NH0.B3RqM1bubuGoSJ7MyErJ9AK_g9_m9o4HrqSUNHd_aPA";
+</script>
+
+<!-- Auth gate: shown until the person signs in -->
+<div id="auth-gate">
+  <div class="auth-card">
+    <div class="brand">Study<span>Hub</span></div>
+    <div class="auth-sub">Sign in to save your notes, quizzes, and flashcards to your account.</div>
+    <button class="auth-btn" id="auth-google">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.87 2.7-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.98v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.66 9c0-.59.1-1.17.29-1.7V4.97H.98A9 9 0 0 0 0 9c0 1.45.35 2.83.98 4.03l2.97-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .98 4.97l2.97 2.33C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
+      Continue with Google
+    </button>
+    <button class="auth-btn" id="auth-microsoft">
+      <svg width="16" height="16" viewBox="0 0 16 16"><rect width="7" height="7" fill="#F35325"/><rect x="9" width="7" height="7" fill="#81BC06"/><rect y="9" width="7" height="7" fill="#05A6F0"/><rect x="9" y="9" width="7" height="7" fill="#FFBA08"/></svg>
+      Continue with Microsoft
+    </button>
+    <div class="auth-divider">or</div>
+    <div class="field" style="text-align:left;">
+      <input type="text" id="auth-email" placeholder="you@email.com">
+    </div>
+    <button class="auth-btn" id="auth-email-btn" style="background:var(--accent);color:var(--accent-ink);border-color:var(--accent);">Send me a sign-in link</button>
+    <div class="auth-status" id="auth-status"></div>
+  </div>
+</div>
+
+<div id="app">
+
+  <!-- Desktop sidebar -->
+  <nav id="sidebar">
+    <div class="brand">Study<span>Hub</span></div>
+    <button class="nav-item active" data-view="dashboard"><span class="nav-icon">◆</span> Dashboard</button>
+    <button class="nav-item" data-view="notes"><span class="nav-icon">✎</span> Notes</button>
+    <button class="nav-item" data-view="quizzes"><span class="nav-icon">?</span> Quizzes</button>
+    <button class="nav-item" data-view="flashcards"><span class="nav-icon">▤</span> Flashcards</button>
+    <button class="nav-item" data-view="settings"><span class="nav-icon">⚙</span> Settings</button>
+    <div style="margin-top:auto;">
+      <button class="nav-item" id="btn-sign-out-sidebar" style="color:var(--text-muted);"><span class="nav-icon">⏻</span> Sign out</button>
+      <div id="sidebar-footer">Your notes stay private to your account.</div>
+    </div>
+  </nav>
+
+  <main id="main">
+
+    <header id="topbar">
+      <div class="topbar-brand">Study<span>Hub</span></div>
+      <div class="account-menu" id="account-menu">
+        <button class="account-trigger" id="account-trigger">
+          <span class="account-avatar" id="account-avatar">?</span>
+          <span class="account-email-text" id="account-email-topbar">Account</span>
+          <span class="account-caret">▾</span>
+        </button>
+        <div class="account-dropdown" id="account-dropdown">
+          <div class="account-dropdown-email" id="account-dropdown-email"></div>
+          <button class="account-dropdown-item" id="btn-sign-out-topbar">⏻ Sign out</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- DASHBOARD -->
+    <section class="view active" id="view-dashboard">
+      <div class="page-head">
+        <div>
+          <h1>Welcome back</h1>
+          <div class="page-sub">Type a topic — the AI writes the note, quiz, and flashcards for you.</div>
+        </div>
+        <button class="btn btn-primary" id="btn-generate-all">✨ Generate study material</button>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-num" id="stat-notes">0</div><div class="stat-label">Notes</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-quizzes">0</div><div class="stat-label">Quizzes</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-cards">0</div><div class="stat-label">Flashcards</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-streak">0</div><div class="stat-label">Day streak</div></div>
+      </div>
+      <h3 style="margin-bottom:10px;">Recent notes</h3>
+      <div class="list" id="dash-recent-notes"></div>
+    </section>
+
+    <!-- NOTES -->
+    <section class="view" id="view-notes">
+      <div class="page-head">
+        <div>
+          <h1>Notes</h1>
+          <div class="page-sub">Give the AI a topic and it writes the note for you.</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" id="btn-new-note">+ Write manually</button>
+          <button class="btn btn-primary" id="btn-generate-note">✨ Generate note</button>
+        </div>
+      </div>
+      <div class="field" style="max-width:320px;">
+        <input type="text" id="notes-search" placeholder="Search notes…">
+      </div>
+      <div class="split notes-split">
+        <div class="notes-sidebar-list" id="notes-list"></div>
+        <div id="note-editor-wrap">
+          <div class="empty" id="note-editor-empty"><strong>No note selected</strong>Pick a note on the left, or create a new one.</div>
+          <div id="note-editor" class="note-editor-card" style="display:none;">
+            <input type="text" id="note-title" placeholder="Untitled note" style="margin-bottom:12px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+              <input type="text" id="note-subject" placeholder="Add a subject…" style="width:auto;flex:1;min-width:140px;">
+              <div class="note-view-toggle">
+                <button class="note-view-toggle-btn active" id="btn-view-edit" type="button">Edit</button>
+                <button class="note-view-toggle-btn" id="btn-view-preview" type="button">Preview</button>
+              </div>
+            </div>
+            <div class="note-content-wrap">
+              <textarea id="note-content" rows="12" placeholder="Type your notes here… (use | Col 1 | Col 2 | rows for tables)"></textarea>
+              <div id="note-preview" class="note-preview" style="display:none;"></div>
+            </div>
+            <p style="font-size:11px;color:var(--text-muted);margin:8px 0 0;">Tip: <code>**bold**</code>, <code>## headers</code>, <code>- bullet points</code>, and tables (<code>| Term | Meaning |</code> then <code>|---|---|</code>) all render properly in Preview and the PDF.</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;">
+              <button class="btn btn-primary" id="btn-save-note">Save note</button>
+              <button class="btn" id="btn-gen-quiz">✨ Generate quiz</button>
+              <button class="btn" id="btn-gen-cards">✨ Generate flashcards</button>
+              <button class="btn" id="btn-download-pdf">⬇ Download PDF</button>
+              <button class="btn btn-danger" id="btn-delete-note">Delete</button>
+            </div>
+            <div id="gen-status" style="font-size:12.5px;margin-top:10px;color:var(--text-muted);"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- QUIZZES -->
+    <section class="view" id="view-quizzes">
+      <div class="page-head">
+        <div>
+          <h1>Quizzes</h1>
+          <div class="page-sub">Give the AI a topic — it writes a multiple-choice quiz.</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" id="btn-new-quiz">+ Write manually</button>
+          <button class="btn btn-primary" id="btn-generate-quiz-topic">✨ Generate quiz</button>
+        </div>
+      </div>
+      <div class="list" id="quizzes-list"></div>
+    </section>
+
+    <!-- FLASHCARDS -->
+    <section class="view" id="view-flashcards">
+      <div class="page-head">
+        <div>
+          <h1>Flashcards</h1>
+          <div class="page-sub">Give the AI a topic — it writes the deck for you.</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" id="btn-new-deck">+ Write manually</button>
+          <button class="btn btn-primary" id="btn-generate-deck-topic">✨ Generate deck</button>
+        </div>
+      </div>
+      <div class="list" id="decks-list"></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="view" id="view-settings">
+      <div class="page-head">
+        <div>
+          <h1>Settings</h1>
+          <div class="page-sub">Manage your account.</div>
+        </div>
+      </div>
+      <div class="card" style="max-width:520px;margin-bottom:16px;">
+        <h3 style="margin-top:0;font-size:15px;">Account</h3>
+        <p style="font-size:12.5px;color:var(--text-muted);" id="account-email">Signed in</p>
+        <button class="btn btn-ghost btn-sm" id="btn-sign-out">Sign out</button>
+      </div>
+      <div class="card" style="max-width:520px;">
+        <h3 style="margin-top:0;font-size:15px;">AI generation</h3>
+        <p style="font-size:12.5px;color:var(--text-muted);">Built in — nothing to set up. Just tap "Generate" anywhere in the app.</p>
+        <div id="usage-block" style="margin:14px 0;"></div>
+        <button class="btn btn-sm" id="btn-test-key">Test AI connection</button>
+        <div id="settings-status"></div>
+      </div>
+      <div class="card" style="max-width:520px;margin-top:16px;">
+        <h3 style="margin-top:0;font-size:15px;">Data</h3>
+        <p style="font-size:12.5px;color:var(--text-muted);">Your notes, quizzes, and decks are saved to your account and sync across any device you sign into.</p>
+        <button class="btn btn-danger btn-sm" id="btn-clear-data">Erase all my data</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Mobile bottom tab bar -->
+  <nav id="tabbar">
+    <button class="tab-item active" data-view="dashboard"><span class="tab-icon">◆</span>Home</button>
+    <button class="tab-item" data-view="notes"><span class="tab-icon">✎</span>Notes</button>
+    <button class="tab-item" data-view="quizzes"><span class="tab-icon">?</span>Quiz</button>
+    <button class="tab-item" data-view="flashcards"><span class="tab-icon">▤</span>Cards</button>
+    <button class="tab-item" data-view="settings"><span class="tab-icon">⚙</span>Settings</button>
+  </nav>
+</div>
+
+<!-- Generic modal -->
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- Supabase client & auth ---------------- */
+  const supabaseClient = window.supabase.createClient(window.__SUPABASE_URL__, window.__SUPABASE_ANON_KEY__);
+  let currentUser = null;
+  let pushTimer = null;
+
+  function showAuthGate(msg){
+    document.getElementById("auth-gate").style.display = "flex";
+    document.getElementById("app").style.display = "none";
+    if(msg) document.getElementById("auth-status").textContent = msg;
+  }
+  function showApp(){
+    document.getElementById("auth-gate").style.display = "none";
+    document.getElementById("app").style.display = "flex";
+  }
+
+  // Always redirect back to a clean URL (no leftover ?error=... from a
+  // previous failed attempt) — otherwise a stale query string can make
+  // every future sign-in attempt fail to match the registered redirect URI.
+  const CLEAN_REDIRECT_URL = window.location.origin + window.location.pathname;
+
+  document.getElementById("auth-google").addEventListener("click", ()=>{
+    supabaseClient.auth.signInWithOAuth({
+      provider:"google",
+      options:{ redirectTo: CLEAN_REDIRECT_URL, queryParams:{ prompt:"select_account" } }
+    });
+  });
+  document.getElementById("auth-microsoft").addEventListener("click", ()=>{
+    supabaseClient.auth.signInWithOAuth({
+      provider:"azure",
+      options:{ redirectTo: CLEAN_REDIRECT_URL, queryParams:{ prompt:"select_account" } }
+    });
+  });
+  document.getElementById("auth-email-btn").addEventListener("click", async ()=>{
+    const email = document.getElementById("auth-email").value.trim();
+    const statusEl = document.getElementById("auth-status");
+    if(!email){ statusEl.textContent = "Enter your email first."; return; }
+    statusEl.textContent = "Sending link…";
+    const { error } = await supabaseClient.auth.signInWithOtp({ email, options:{ emailRedirectTo: CLEAN_REDIRECT_URL } });
+    statusEl.textContent = error ? ("Error: "+error.message) : "Check your email for a sign-in link.";
+  });
+
+  // If we just landed back from a failed OAuth redirect, show the reason
+  // in the auth card (not the address bar) and scrub the URL clean so it
+  // can't poison the next sign-in attempt.
+  (function cleanUpAuthErrorInUrl(){
+    const params = new URLSearchParams(window.location.search);
+    const err = params.get("error_description") || params.get("error");
+    if(err){
+      const statusEl = document.getElementById("auth-status");
+      if(statusEl) statusEl.textContent = "Sign-in failed: " + decodeURIComponent(err.replace(/\+/g," "));
+      window.history.replaceState({}, document.title, CLEAN_REDIRECT_URL);
+    }
+  })();
+
+
+  async function onSignedIn(user){
+    currentUser = user;
+    const label = user.email || "Signed in";
+    document.getElementById("account-email").textContent = label;
+    document.getElementById("account-dropdown-email").textContent = label;
+    document.getElementById("account-email-topbar").textContent = user.email ? user.email.split("@")[0] : "Account";
+    document.getElementById("account-avatar").textContent = (user.email || "?").charAt(0).toUpperCase();
+    const { data, error } = await supabaseClient
+      .from("studyhub_data")
+      .select("data")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if(!error && data && data.data){
+      db = data.data;
+      localStorage.setItem(DB_KEY, JSON.stringify(db));
+    } else {
+      db = loadDB();
+      await pushRemote();
+    }
+    showApp();
+    renderDashboard();
+  }
+
+  async function pushRemote(){
+    if(!currentUser) return;
+    try{
+      await supabaseClient.from("studyhub_data").upsert({
+        user_id: currentUser.id,
+        data: db,
+        updated_at: new Date().toISOString()
+      });
+    }catch(e){ /* offline is fine — localStorage already has it */ }
+  }
+  function schedulePush(){
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(pushRemote, 900);
+  }
+
+  async function doSignOut(){
+    await supabaseClient.auth.signOut();
+    location.reload();
+  }
+  document.getElementById("btn-sign-out").addEventListener("click", doSignOut);
+  document.getElementById("btn-sign-out-sidebar").addEventListener("click", doSignOut);
+  document.getElementById("btn-sign-out-topbar").addEventListener("click", doSignOut);
+
+  document.getElementById("account-trigger").addEventListener("click", (e)=>{
+    e.stopPropagation();
+    document.getElementById("account-menu").classList.toggle("open");
+  });
+  document.addEventListener("click", (e)=>{
+    const menu = document.getElementById("account-menu");
+    if(menu.classList.contains("open") && !menu.contains(e.target)){
+      menu.classList.remove("open");
+    }
+  });
+
+  (async function initAuth(){
+    const { data:{ session } } = await supabaseClient.auth.getSession();
+    if(session) await onSignedIn(session.user);
+    else showAuthGate();
+    supabaseClient.auth.onAuthStateChange((event, session)=>{
+      if(event === "SIGNED_IN" && session && (!currentUser || currentUser.id !== session.user.id)){
+        onSignedIn(session.user);
+      }
+      if(event === "SIGNED_OUT") location.reload();
+    });
+  })();
+
+  /* ---------------- Storage layer ---------------- */
+  const DB_KEY = "studyhub_db_v1";
+  function loadDB(){
+    try{
+      const raw = localStorage.getItem(DB_KEY);
+      if(raw) return JSON.parse(raw);
+    }catch(e){}
+    return { notes:[], quizzes:[], decks:[], activityDates:[], settings:{apiKey:"",model:"gemini-flash-latest"} };
+  }
+  let db = loadDB();
+  function save(){ localStorage.setItem(DB_KEY, JSON.stringify(db)); schedulePush(); }
+  function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+  function today(){ return new Date().toISOString().slice(0,10); }
+  function logActivity(){
+    const t = today();
+    if(!db.activityDates.includes(t)){ db.activityDates.push(t); save(); }
+  }
+
+  function toast(msg){
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    setTimeout(()=>el.classList.remove("show"), 2200);
+  }
+  function toastQuota(msg){
+    if(lastRemaining !== null){
+      toast(`${msg} (${lastRemaining} left today)`);
+    } else {
+      toast(msg);
+    }
+  }
+
+  /* ---------------- Navigation ---------------- */
+  const views = document.querySelectorAll(".view");
+  function showView(name){
+    views.forEach(v=>v.classList.toggle("active", v.id === "view-"+name));
+    document.querySelectorAll(".nav-item").forEach(b=>b.classList.toggle("active", b.dataset.view===name));
+    document.querySelectorAll(".tab-item").forEach(b=>b.classList.toggle("active", b.dataset.view===name));
+    if(name==="dashboard") renderDashboard();
+    if(name==="notes") renderNotesList();
+    if(name==="quizzes") renderQuizzesList();
+    if(name==="flashcards") renderDecksList();
+    if(name==="settings") renderSettings();
+  }
+  document.querySelectorAll("[data-view]").forEach(btn=>{
+    btn.addEventListener("click", ()=>showView(btn.dataset.view));
+  });
+
+  /* ---------------- Modal helper ---------------- */
+  const backdrop = document.getElementById("modal-backdrop");
+  const modalContent = document.getElementById("modal-content");
+  function openModal(html){
+    modalContent.innerHTML = html;
+    backdrop.classList.add("open");
+  }
+  function closeModal(){ backdrop.classList.remove("open"); modalContent.innerHTML=""; }
+  backdrop.addEventListener("click", e=>{ if(e.target===backdrop) closeModal(); });
+
+  /* ==================================================
+     DASHBOARD
+  ================================================== */
+  function computeStreak(){
+    const dates = new Set(db.activityDates);
+    let streak = 0;
+    let cursor = new Date();
+    while(true){
+      const key = cursor.toISOString().slice(0,10);
+      if(dates.has(key)){ streak++; cursor.setDate(cursor.getDate()-1); }
+      else break;
+    }
+    return streak;
+  }
+  function renderDashboard(){
+    document.getElementById("stat-notes").textContent = db.notes.length;
+    document.getElementById("stat-quizzes").textContent = db.quizzes.length;
+    const cardCount = db.decks.reduce((s,d)=>s+d.cards.length,0);
+    document.getElementById("stat-cards").textContent = cardCount;
+    document.getElementById("stat-streak").textContent = computeStreak();
+
+    const recentWrap = document.getElementById("dash-recent-notes");
+    const recent = [...db.notes].sort((a,b)=>b.updatedAt-a.updatedAt).slice(0,5);
+    if(recent.length===0){
+      recentWrap.innerHTML = '<div class="empty"><strong>Nothing here yet</strong>Create your first note to get started.</div>';
+      return;
+    }
+    recentWrap.innerHTML = recent.map(n=>`
+      <div class="row-card" data-open-note="${n.id}">
+        <div>
+          <div class="row-title">${escapeHtml(n.title||"Untitled")}</div>
+          <div class="row-meta">${n.subject? escapeHtml(n.subject)+" · ":""}${new Date(n.updatedAt).toLocaleDateString()}</div>
+        </div>
+        <span class="tag">note</span>
+      </div>
+    `).join("");
+    recentWrap.querySelectorAll("[data-open-note]").forEach(el=>{
+      el.addEventListener("click", ()=>{
+        showView("notes");
+        selectNote(el.dataset.openNote);
+      });
+    });
+  }
+
+  function escapeHtml(s){
+    return (s||"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+
+  /* ==================================================
+     NOTES
+  ================================================== */
+  let activeNoteId = null;
+
+  const SUBJECT_COLORS = ["#F4B942","#4ECDC4","#E8604C","#9B8CF2","#5FB0E8"];
+  function subjectColor(subject){
+    if(!subject) return "var(--accent)";
+    let h = 0;
+    for(let i=0;i<subject.length;i++) h = (h*31 + subject.charCodeAt(i)) >>> 0;
+    return SUBJECT_COLORS[h % SUBJECT_COLORS.length];
+  }
+
+  function renderNotesList(){
+    const wrap = document.getElementById("notes-list");
+    const q = (document.getElementById("notes-search").value||"").toLowerCase();
+    let list = [...db.notes].sort((a,b)=>b.updatedAt-a.updatedAt);
+    if(q) list = list.filter(n => (n.title+n.subject+n.content).toLowerCase().includes(q));
+    if(list.length===0){
+      wrap.innerHTML = '<div class="empty" style="padding:24px 12px;"><strong>No notes yet</strong>Tap "Generate note" and give the AI a topic.</div>';
+      return;
+    }
+    wrap.innerHTML = list.map(n=>`
+      <div class="note-mini ${n.id===activeNoteId?'active':''}" data-id="${n.id}" style="--note-color:${subjectColor(n.subject)};">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px;">
+          <div style="min-width:0;">
+            <div class="note-mini-title">${escapeHtml(n.title||"Untitled")}</div>
+            <div class="note-mini-meta">
+              ${n.subject ? `<span class="note-mini-chip">${escapeHtml(n.subject)}</span>` : ""}
+              <span>${new Date(n.updatedAt).toLocaleDateString()}</span>
+            </div>
+          </div>
+          <button class="row-delete-btn" data-delete-note-mini="${n.id}" title="Delete note" style="flex-shrink:0;">🗑</button>
+        </div>
+      </div>
+    `).join("");
+    wrap.querySelectorAll(".note-mini").forEach(el=>{
+      el.addEventListener("click", ()=>selectNote(el.dataset.id));
+    });
+    wrap.querySelectorAll("[data-delete-note-mini]").forEach(el=>{
+      el.addEventListener("click", (e)=>{
+        e.stopPropagation();
+        if(!confirm("Delete this note? This can't be undone.")) return;
+        const id = el.dataset.deleteNoteMini;
+        db.notes = db.notes.filter(n=>n.id!==id);
+        save();
+        if(activeNoteId===id){
+          activeNoteId = null;
+          document.getElementById("note-editor-empty").style.display="block";
+          document.getElementById("note-editor").style.display="none";
+        }
+        renderNotesList();
+        toast("Note deleted");
+      });
+    });
+  }
+
+  function selectNote(id){
+    activeNoteId = id;
+    const n = db.notes.find(x=>x.id===id);
+    document.getElementById("note-editor-empty").style.display = n? "none":"block";
+    document.getElementById("note-editor").style.display = n? "block":"none";
+    if(n){
+      document.getElementById("note-title").value = n.title||"";
+      document.getElementById("note-subject").value = n.subject||"";
+      document.getElementById("note-content").value = n.content||"";
+      document.getElementById("gen-status").textContent = "";
+      document.getElementById("btn-view-edit").classList.add("active");
+      document.getElementById("btn-view-preview").classList.remove("active");
+      document.getElementById("note-content").style.display = "block";
+      document.getElementById("note-preview").style.display = "none";
+    }
+    renderNotesList();
+  }
+
+  document.getElementById("btn-new-note").addEventListener("click", ()=>{
+    const n = { id:uid(), title:"", subject:"", content:"", updatedAt:Date.now() };
+    db.notes.push(n); save(); logActivity();
+    renderNotesList();
+    selectNote(n.id);
+    document.getElementById("note-title").focus();
+  });
+
+  document.getElementById("btn-save-note").addEventListener("click", ()=>{
+    const n = db.notes.find(x=>x.id===activeNoteId);
+    if(!n) return;
+    n.title = document.getElementById("note-title").value.trim();
+    n.subject = document.getElementById("note-subject").value.trim();
+    n.content = document.getElementById("note-content").value;
+    n.updatedAt = Date.now();
+    save(); logActivity();
+    renderNotesList();
+    toast("Note saved");
+  });
+
+  document.getElementById("btn-delete-note").addEventListener("click", ()=>{
+    if(!activeNoteId) return;
+    if(!confirm("Delete this note?")) return;
+    db.notes = db.notes.filter(x=>x.id!==activeNoteId);
+    save();
+    activeNoteId = null;
+    document.getElementById("note-editor-empty").style.display="block";
+    document.getElementById("note-editor").style.display="none";
+    renderNotesList();
+    toast("Note deleted");
+  });
+
+  document.getElementById("notes-search").addEventListener("input", renderNotesList);
+
+  /* ==================================================
+     NOTE CONTENT PARSING — turns "| a | b |" style markdown
+     tables into real blocks, shared by Preview and PDF export.
+     Returns an ordered array of {type:"text", text} and
+     {type:"table", headers, rows} blocks.
+  ================================================== */
+  function parseNoteBlocks(content){
+    const lines = (content || "").split("\n");
+    const blocks = [];
+    let textBuf = [];
+    const flushText = ()=>{
+      const joined = textBuf.join("\n").trim();
+      if(joined) blocks.push({ type:"text", text: joined });
+      textBuf = [];
+    };
+    const isTableRow = (line)=> /^\s*\|.*\|\s*$/.test(line);
+    const isSeparatorRow = (line)=> /^\s*\|?[\s:|-]+\|?\s*$/.test(line) && line.includes("-");
+    const splitRow = (line)=> line.trim().replace(/^\|/,"").replace(/\|$/,"").split("|").map(c=>c.trim());
+    const headerMatch = (line)=> line.match(/^(#{1,3})\s+(.*)/);
+    const bulletMatch = (line)=> line.match(/^[-*]\s+(.*)/);
+    const numberedMatch = (line)=> line.match(/^\d+\.\s+(.*)/);
+
+    let i = 0;
+    while(i < lines.length){
+      const line = lines[i];
+      const h = headerMatch(line);
+      const bullet = bulletMatch(line);
+      const numbered = numberedMatch(line);
+
+      if(isTableRow(line) && i+1 < lines.length && isSeparatorRow(lines[i+1])){
+        flushText();
+        const headers = splitRow(line);
+        let j = i+2;
+        const rows = [];
+        while(j < lines.length && isTableRow(lines[j])){
+          rows.push(splitRow(lines[j]));
+          j++;
+        }
+        blocks.push({ type:"table", headers, rows });
+        i = j;
+      } else if(h){
+        flushText();
+        blocks.push({ type:"header", level: h[1].length, text: h[2] });
+        i++;
+      } else if(bullet){
+        flushText();
+        const items = [bullet[1]];
+        let j = i+1;
+        while(j < lines.length && bulletMatch(lines[j])){ items.push(bulletMatch(lines[j])[1]); j++; }
+        blocks.push({ type:"ul", items });
+        i = j;
+      } else if(numbered){
+        flushText();
+        const items = [numbered[1]];
+        let j = i+1;
+        while(j < lines.length && numberedMatch(lines[j])){ items.push(numberedMatch(lines[j])[1]); j++; }
+        blocks.push({ type:"ol", items });
+        i = j;
+      } else {
+        textBuf.push(line);
+        i++;
+      }
+    }
+    flushText();
+    return blocks;
+  }
+
+  function escapeHtmlPreview(s){
+    return (s||"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+
+  // Inline markdown -> HTML: **bold**, *italic*/_italic_, `code`
+  function formatInline(text){
+    let s = escapeHtmlPreview(text);
+    s = s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    s = s.replace(/(^|[^*])\*(?!\*)(.+?)\*(?!\*)/g, "$1<em>$2</em>");
+    s = s.replace(/_(.+?)_/g, "<em>$1</em>");
+    s = s.replace(/`(.+?)`/g, "<code>$1</code>");
+    return s;
+  }
+
+  // Strip markdown markers for plain-text contexts (PDF paragraphs/lists)
+  function stripInline(text){
+    return (text||"").replace(/\*\*(.+?)\*\*/g,"$1").replace(/\*(.+?)\*/g,"$1").replace(/_(.+?)_/g,"$1").replace(/`(.+?)`/g,"$1");
+  }
+
+  function renderNotePreview(content){
+    const blocks = parseNoteBlocks(content);
+    if(blocks.length === 0) return `<p style="color:var(--text-muted);">Nothing to preview yet.</p>`;
+    return blocks.map(b=>{
+      if(b.type === "table"){
+        const head = `<tr>${b.headers.map(h=>`<th>${formatInline(h)}</th>`).join("")}</tr>`;
+        const body = b.rows.map(r=>`<tr>${r.map(c=>`<td>${formatInline(c)}</td>`).join("")}</tr>`).join("");
+        return `<table>${head}${body}</table>`;
+      }
+      if(b.type === "header"){
+        const tag = "h"+(b.level+2); // h3/h4/h5 — keeps in scale with the note-preview's own text size
+        return `<${tag}>${formatInline(b.text)}</${tag}>`;
+      }
+      if(b.type === "ul"){
+        return `<ul>${b.items.map(it=>`<li>${formatInline(it)}</li>`).join("")}</ul>`;
+      }
+      if(b.type === "ol"){
+        return `<ol>${b.items.map(it=>`<li>${formatInline(it)}</li>`).join("")}</ol>`;
+      }
+      return `<p>${formatInline(b.text)}</p>`;
+    }).join("");
+  }
+
+  document.getElementById("btn-view-edit").addEventListener("click", ()=>{
+    document.getElementById("btn-view-edit").classList.add("active");
+    document.getElementById("btn-view-preview").classList.remove("active");
+    document.getElementById("note-content").style.display = "block";
+    document.getElementById("note-preview").style.display = "none";
+  });
+  document.getElementById("btn-view-preview").addEventListener("click", ()=>{
+    document.getElementById("btn-view-preview").classList.add("active");
+    document.getElementById("btn-view-edit").classList.remove("active");
+    document.getElementById("note-preview").innerHTML = renderNotePreview(document.getElementById("note-content").value);
+    document.getElementById("note-preview").style.display = "block";
+    document.getElementById("note-content").style.display = "none";
+  });
+
+  document.getElementById("btn-download-pdf").addEventListener("click", ()=>{
+    const n = db.notes.find(x=>x.id===activeNoteId);
+    if(!n){ toast("Select a note first"); return; }
+    if(!window.jspdf){ toast("PDF library didn't load — check your connection"); return; }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit:"pt", format:"a4" });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 48;
+    let y = 60;
+
+    doc.setFont("helvetica","bold");
+    doc.setFontSize(20);
+    doc.text(n.title || "Untitled note", margin, y);
+    y += 22;
+    if(n.subject){
+      doc.setFont("helvetica","normal");
+      doc.setFontSize(11);
+      doc.setTextColor(120);
+      doc.text(n.subject, margin, y);
+      doc.setTextColor(20);
+      y += 22;
+    } else {
+      y += 6;
+    }
+
+    const blocks = parseNoteBlocks(n.content);
+    blocks.forEach(block=>{
+      if(y > 760){ doc.addPage(); y = 60; }
+      if(block.type === "table"){
+        doc.autoTable({
+          startY: y,
+          head: [block.headers.map(stripInline)],
+          body: block.rows.map(r=>r.map(stripInline)),
+          margin: { left: margin, right: margin },
+          styles: { fontSize: 10, cellPadding: 6 },
+          headStyles: { fillColor: [244,185,66], textColor: [30,20,0] },
+          theme: "grid",
+        });
+        y = doc.lastAutoTable.finalY + 20;
+      } else if(block.type === "header"){
+        doc.setFont("helvetica","bold");
+        doc.setFontSize(block.level === 1 ? 16 : (block.level === 2 ? 14 : 12.5));
+        const lines = doc.splitTextToSize(stripInline(block.text), pageWidth - margin*2);
+        lines.forEach(line=>{
+          if(y > 780){ doc.addPage(); y = 60; }
+          doc.text(line, margin, y);
+          y += 17;
+        });
+        y += 6;
+      } else if(block.type === "ul" || block.type === "ol"){
+        doc.setFont("helvetica","normal");
+        doc.setFontSize(11.5);
+        block.items.forEach((item, idx)=>{
+          const marker = block.type === "ul" ? "•" : `${idx+1}.`;
+          const lines = doc.splitTextToSize(stripInline(item), pageWidth - margin*2 - 18);
+          lines.forEach((line, li)=>{
+            if(y > 780){ doc.addPage(); y = 60; }
+            doc.text(li===0 ? `${marker} ${line}` : line, margin + (li===0?0:18), y);
+            y += 15;
+          });
+        });
+        y += 8;
+      } else {
+        doc.setFont("helvetica","normal");
+        doc.setFontSize(11.5);
+        const lines = doc.splitTextToSize(stripInline(block.text), pageWidth - margin*2);
+        lines.forEach(line=>{
+          if(y > 780){ doc.addPage(); y = 60; }
+          doc.text(line, margin, y);
+          y += 16;
+        });
+        y += 10;
+      }
+    });
+
+    const safeName = (n.title || "note").replace(/[^\w\- ]+/g,"").trim() || "note";
+    doc.save(`${safeName}.pdf`);
+    toast("PDF downloaded");
+  });
+
+  /* ==================================================
+     AI GENERATION — routed through a Supabase Edge Function
+     so no API key ever touches the browser or the user.
+  ================================================== */
+  let lastRemaining = null;
+  async function callGemini(prompt, attachment){
+    const body = { prompt };
+    if(attachment) body.attachment = { mimeType: attachment.mimeType, base64: attachment.base64 };
+    const { data, error } = await supabaseClient.functions.invoke("generate", { body });
+    if(error){
+      let msg = error.message || "AI request failed";
+      if(error.context && typeof error.context.json === "function"){
+        try{
+          const errBody = await error.context.json();
+          if(errBody && errBody.error) msg = errBody.error;
+        }catch(e){ /* response wasn't JSON, keep generic message */ }
+      }
+      throw new Error(msg);
+    }
+    if(data && data.error){ throw new Error(data.error); }
+    lastRemaining = (data && typeof data.remaining === "number") ? data.remaining : null;
+    if(lastRemaining !== null && typeof data.limit === "number"){
+      localStorage.setItem("studyhub_usage_cache", JSON.stringify({
+        day: today(), remaining: lastRemaining, limit: data.limit
+      }));
+    }
+    if(data && data.usageDebug){
+      localStorage.setItem("studyhub_usage_debug", data.usageDebug);
+    } else {
+      localStorage.removeItem("studyhub_usage_debug");
+    }
+    return (data && data.text) || "";
+  }
+
+  function getUsageCache(){
+    try{
+      const raw = localStorage.getItem("studyhub_usage_cache");
+      if(!raw) return null;
+      const cached = JSON.parse(raw);
+      if(cached.day !== today()) return null; // stale — new day, resets
+      return cached;
+    }catch(e){ return null; }
+  }
+
+  function extractJson(text){
+    const cleaned = text.replace(/```json|```/g,"").trim();
+    return JSON.parse(cleaned);
+  }
+
+  document.getElementById("btn-gen-quiz").addEventListener("click", async ()=>{
+    const n = db.notes.find(x=>x.id===activeNoteId);
+    if(!n || !n.content.trim()){ toast("Write some note content first"); return; }
+    const statusEl = document.getElementById("gen-status");
+    const btn = document.getElementById("btn-gen-quiz");
+    btn.disabled = true;
+    statusEl.innerHTML = '<span class="gen-loading"><span class="spinner"></span>Generating quiz…</span>';
+    try{
+      const prompt = `Based on the following study notes, write a 5-question multiple choice quiz. Respond with ONLY valid JSON, no markdown, no commentary, in this exact shape:
+{"questions":[{"question":"...", "options":["...","...","...","..."], "correctIndex":0}]}
+Notes:
+"""${n.content}"""`;
+      const raw = await callGemini(prompt);
+      const parsed = extractJson(raw);
+      if(!parsed.questions || !parsed.questions.length) throw new Error("No questions returned");
+      const quiz = { id:uid(), title:(n.title||"Untitled")+" — Quiz", subject:n.subject||"", questions:parsed.questions, attempts:[], createdAt:Date.now() };
+      db.quizzes.push(quiz); save(); logActivity();
+      statusEl.textContent = "Quiz created — check the Quizzes tab.";
+      toastQuota("Quiz generated!");
+    }catch(e){
+      statusEl.textContent = "Couldn't generate: " + e.message;
+    }finally{
+      btn.disabled = false;
+    }
+  });
+
+  document.getElementById("btn-gen-cards").addEventListener("click", async ()=>{
+    const n = db.notes.find(x=>x.id===activeNoteId);
+    if(!n || !n.content.trim()){ toast("Write some note content first"); return; }
+    const statusEl = document.getElementById("gen-status");
+    const btn = document.getElementById("btn-gen-cards");
+    btn.disabled = true;
+    statusEl.innerHTML = '<span class="gen-loading"><span class="spinner"></span>Generating flashcards…</span>';
+    try{
+      const prompt = `Based on the following study notes, create 8 flashcards (term/question on the front, concise answer on the back). Respond with ONLY valid JSON, no markdown, no commentary, in this exact shape:
+{"cards":[{"front":"...", "back":"..."}]}
+Notes:
+"""${n.content}"""`;
+      const raw = await callGemini(prompt);
+      const parsed = extractJson(raw);
+      if(!parsed.cards || !parsed.cards.length) throw new Error("No cards returned");
+      const cards = parsed.cards.map(c=>({ id:uid(), front:c.front, back:c.back, needsReview:false }));
+      const deck = { id:uid(), title:(n.title||"Untitled")+" — Flashcards", subject:n.subject||"", cards, createdAt:Date.now() };
+      db.decks.push(deck); save(); logActivity();
+      statusEl.textContent = "Flashcard deck created — check the Flashcards tab.";
+      toastQuota("Flashcards generated!");
+    }catch(e){
+      statusEl.textContent = "Couldn't generate: " + e.message;
+    }finally{
+      btn.disabled = false;
+    }
+  });
+
+  /* ==================================================
+     TOPIC-BASED AI GENERATION (AI writes everything)
+  ================================================== */
+  let tgAttachment = null; // { file, mimeType, base64, name }
+
+  function openTopicModal(mode){
+    tgAttachment = null;
+    const titles = {
+      all:"Generate study material",
+      note:"Generate a note",
+      quiz:"Generate a quiz",
+      deck:"Generate a flashcard deck"
+    };
+    const descs = {
+      all:"The AI will write a full note, a multiple-choice quiz, and a flashcard deck.",
+      note:"The AI will write a complete note.",
+      quiz:"The AI will write a multiple-choice quiz.",
+      deck:"The AI will write a flashcard deck."
+    };
+    openModal(`
+      <h2>${titles[mode]}</h2>
+      <p style="font-size:12.5px;color:var(--text-muted);margin-top:-8px;">${descs[mode]} Give it a topic, upload material, or both.</p>
+
+      <div class="field">
+        <label>Source material (optional)</label>
+        <div id="tg-dropzone" class="dropzone">
+          <div id="tg-dropzone-empty">
+            <div style="font-size:22px;margin-bottom:4px;">⇪</div>
+            Drag &amp; drop a photo or PDF here<br>
+            <span style="text-decoration:underline;cursor:pointer;" id="tg-browse">or browse your files</span>
+          </div>
+          <div id="tg-dropzone-filled" style="display:none;">
+            <div class="row-title" id="tg-file-name"></div>
+            <button class="btn btn-ghost btn-sm" id="tg-file-remove" style="margin-top:8px;">Remove file</button>
+          </div>
+        </div>
+        <input type="file" id="tg-file-input" accept="image/*,.pdf" style="display:none;">
+        <p style="font-size:11px;color:var(--text-muted);margin-top:6px;">Photos of notes/textbook pages and PDFs work best. Max ~15MB.</p>
+      </div>
+
+      <div class="field"><label>Topic</label><input type="text" id="tg-topic" placeholder="e.g. The French Revolution, Photosynthesis, Big-O notation…"></div>
+      <div class="field"><label>Extra detail (optional)</label><input type="text" id="tg-detail" placeholder="e.g. focus on causes, high school level, chapter 4 only…"></div>
+      ${mode!=='deck' ? `<div class="field"><label>Number of quiz questions</label><input type="text" id="tg-qcount" value="5"></div>` : ``}
+      ${mode!=='quiz' ? `<div class="field"><label>Number of flashcards</label><input type="text" id="tg-ccount" value="8"></div>` : ``}
+      <div id="tg-status" style="font-size:12.5px;color:var(--text-muted);min-height:18px;"></div>
+      <div class="modal-actions">
+        <button class="btn" id="tg-cancel">Cancel</button>
+        <button class="btn btn-primary" id="tg-go">Generate</button>
+      </div>
+    `);
+
+    const dropzone = document.getElementById("tg-dropzone");
+    const fileInput = document.getElementById("tg-file-input");
+    document.getElementById("tg-browse").addEventListener("click", ()=>fileInput.click());
+    dropzone.addEventListener("click", (e)=>{ if(!tgAttachment) fileInput.click(); });
+    fileInput.addEventListener("change", ()=>{ if(fileInput.files[0]) handleTgFile(fileInput.files[0]); });
+    dropzone.addEventListener("dragover", (e)=>{ e.preventDefault(); dropzone.classList.add("dropzone-over"); });
+    dropzone.addEventListener("dragleave", ()=> dropzone.classList.remove("dropzone-over"));
+    dropzone.addEventListener("drop", (e)=>{
+      e.preventDefault();
+      dropzone.classList.remove("dropzone-over");
+      if(e.dataTransfer.files[0]) handleTgFile(e.dataTransfer.files[0]);
+    });
+    document.getElementById("tg-cancel").addEventListener("click", closeModal);
+    document.getElementById("tg-go").addEventListener("click", ()=>runTopicGeneration(mode));
+  }
+
+  function handleTgFile(file){
+    const okTypes = ["image/png","image/jpeg","image/webp","image/heic","application/pdf"];
+    if(!okTypes.includes(file.type)){ toast("Please use a photo (JPG/PNG/WEBP) or PDF"); return; }
+    if(file.size > 15*1024*1024){ toast("File is too large (max ~15MB)"); return; }
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      const base64 = reader.result.split(",")[1];
+      tgAttachment = { mimeType:file.type, base64, name:file.name };
+      document.getElementById("tg-dropzone-empty").style.display = "none";
+      document.getElementById("tg-dropzone-filled").style.display = "block";
+      document.getElementById("tg-file-name").textContent = "📎 " + file.name;
+    };
+    reader.readAsDataURL(file);
+  }
+  document.addEventListener("click", (e)=>{
+    if(e.target && e.target.id === "tg-file-remove"){
+      tgAttachment = null;
+      document.getElementById("tg-dropzone-empty").style.display = "block";
+      document.getElementById("tg-dropzone-filled").style.display = "none";
+    }
+  });
+
+  async function runTopicGeneration(mode){
+    const topic = document.getElementById("tg-topic").value.trim();
+    const detail = document.getElementById("tg-detail")? document.getElementById("tg-detail").value.trim() : "";
+    const qcount = document.getElementById("tg-qcount") ? (parseInt(document.getElementById("tg-qcount").value,10)||5) : 5;
+    const ccount = document.getElementById("tg-ccount") ? (parseInt(document.getElementById("tg-ccount").value,10)||8) : 8;
+    const statusEl = document.getElementById("tg-status");
+    const goBtn = document.getElementById("tg-go");
+    if(!topic && !tgAttachment){ toast("Enter a topic or upload a file"); return; }
+    goBtn.disabled = true;
+    document.getElementById("tg-cancel").disabled = true;
+    const loadingMsg = tgAttachment ? "Reading your file and writing…" : "Thinking and writing…";
+    statusEl.innerHTML = `<span class="gen-loading"><span class="spinner"></span>${loadingMsg}</span>`;
+
+    const subjectLabel = topic || (tgAttachment ? tgAttachment.name : "Uploaded material");
+    const sourceClause = tgAttachment
+      ? (topic
+          ? `Base this on the attached file, focused on "${topic}"${detail?` (${detail})`:""}.`
+          : `Base this entirely on the content of the attached file.${detail?` Focus: ${detail}.`:""}`)
+      : `Write about the topic "${topic}"${detail?` (${detail})`:""}.`;
+
+    try{
+      if(mode === "all"){
+        const prompt = `You are an expert tutor. ${sourceClause}
+Respond with ONLY valid JSON, no markdown fences, no commentary, no code comments, in exactly this shape (all four keys are required):
+{"noteTitle": "...", "noteContent": "a thorough, well-organized study note, several paragraphs, plain text with line breaks between sections", "questions": [{"question": "...", "options": ["...","...","...","..."], "correctIndex": 0}], "cards": [{"front": "...", "back": "..."}]}
+The "questions" array must contain exactly ${qcount} multiple-choice questions. The "cards" array must contain exactly ${ccount} flashcards.
+If the note content includes anything comparative, categorized, or tabular (e.g. comparisons, classifications, timelines with columns, term/definition pairs), format that part as a markdown table inside noteContent using pipe syntax, e.g. a header row like "| Term | Meaning |" followed by a separator row like "|---|---|" and then data rows — otherwise just use plain paragraphs.
+Use markdown formatting throughout noteContent to make it easy to study from: "## " for section headers, "- " for bullet points, "**bold**" around key terms, and blank lines between paragraphs.`;
+        const raw = await callGemini(prompt, tgAttachment);
+        const parsed = extractJson(raw);
+        const note = { id:uid(), title:parsed.noteTitle||subjectLabel, subject:detail||"", content:parsed.noteContent||"", updatedAt:Date.now() };
+        db.notes.push(note);
+
+        let questions = (parsed.questions && parsed.questions.length) ? parsed.questions : null;
+        let cards = (parsed.cards && parsed.cards.length) ? parsed.cards.map(c=>({id:uid(), front:c.front, back:c.back, needsReview:false})) : null;
+
+        // Self-heal: if the combined response dropped a part, retry it on its own
+        // rather than silently giving up on what was promised.
+        if(!questions){
+          try{
+            statusEl.textContent = "Note ready — filling in the quiz…";
+            const qRaw = await callGemini(`Based on this note, write a ${qcount}-question multiple choice quiz. Respond with ONLY valid JSON, no markdown, no comments, in exactly this shape: {"questions": [{"question": "...", "options": ["...","...","...","..."], "correctIndex": 0}]}\nNote:\n"""${note.content}"""`);
+            const qParsed = extractJson(qRaw);
+            if(qParsed.questions && qParsed.questions.length) questions = qParsed.questions;
+          }catch(e){ /* leave questions null — reported below */ }
+        }
+        if(!cards){
+          try{
+            statusEl.textContent = "Filling in the flashcards…";
+            const cRaw = await callGemini(`Based on this note, create ${ccount} flashcards (front/back). Respond with ONLY valid JSON, no markdown, no comments, in exactly this shape: {"cards": [{"front": "...", "back": "..."}]}\nNote:\n"""${note.content}"""`);
+            const cParsed = extractJson(cRaw);
+            if(cParsed.cards && cParsed.cards.length) cards = cParsed.cards.map(c=>({id:uid(), front:c.front, back:c.back, needsReview:false}));
+          }catch(e){ /* leave cards null — reported below */ }
+        }
+
+        if(questions){
+          db.quizzes.push({ id:uid(), title:(parsed.noteTitle||subjectLabel)+" — Quiz", subject:detail||"", questions, attempts:[], createdAt:Date.now() });
+        }
+        if(cards){
+          db.decks.push({ id:uid(), title:(parsed.noteTitle||subjectLabel)+" — Flashcards", subject:detail||"", cards, createdAt:Date.now() });
+        }
+        save(); logActivity();
+        closeModal();
+        const missing = [!questions && "quiz", !cards && "flashcards"].filter(Boolean);
+        if(missing.length){
+          toastQuota(`Note generated — couldn't generate ${missing.join(" or ")}, try regenerating from the note.`);
+        } else {
+          toastQuota("Note, quiz, and flashcards generated!");
+        }
+        showView("notes");
+        renderNotesList();
+        selectNote(note.id);
+      }
+      else if(mode === "note"){
+        const prompt = `You are an expert tutor. ${sourceClause} Write a complete, well-organized study note. Respond with ONLY valid JSON, no markdown, in exactly this shape:
+{"noteTitle":"...", "noteContent":"... thorough note text, plain text with line breaks between sections ..."}
+If any part is comparative, categorized, or tabular (comparisons, classifications, term/definition pairs), format that part as a markdown table inside noteContent using pipe syntax (a header row, then a "|---|---|" separator row, then data rows) — otherwise use plain paragraphs.
+Use markdown formatting throughout noteContent: "## " for section headers, "- " for bullet points, "**bold**" around key terms, and blank lines between paragraphs.`;
+        const raw = await callGemini(prompt, tgAttachment);
+        const parsed = extractJson(raw);
+        const note = { id:uid(), title:parsed.noteTitle||subjectLabel, subject:detail||"", content:parsed.noteContent||"", updatedAt:Date.now() };
+        db.notes.push(note); save(); logActivity();
+        closeModal();
+        toastQuota("Note generated!");
+        renderNotesList();
+        selectNote(note.id);
+      }
+      else if(mode === "quiz"){
+        const prompt = `${sourceClause} Write a ${qcount}-question multiple choice quiz on it. Respond with ONLY valid JSON, no markdown, in exactly this shape:
+{"quizTitle":"...", "questions":[{"question":"...", "options":["...","...","...","..."], "correctIndex":0}]}`;
+        const raw = await callGemini(prompt, tgAttachment);
+        const parsed = extractJson(raw);
+        if(!parsed.questions || !parsed.questions.length) throw new Error("No questions returned");
+        db.quizzes.push({ id:uid(), title:parsed.quizTitle||subjectLabel+" — Quiz", subject:detail||"", questions:parsed.questions, attempts:[], createdAt:Date.now() });
+        save(); logActivity();
+        closeModal();
+        toastQuota("Quiz generated!");
+        renderQuizzesList();
+      }
+      else if(mode === "deck"){
+        const prompt = `${sourceClause} Write a ${ccount}-card flashcard deck on it. Respond with ONLY valid JSON, no markdown, in exactly this shape:
+{"deckTitle":"...", "cards":[{"front":"...", "back":"..."}]}`;
+        const raw = await callGemini(prompt, tgAttachment);
+        const parsed = extractJson(raw);
+        if(!parsed.cards || !parsed.cards.length) throw new Error("No cards returned");
+        const cards = parsed.cards.map(c=>({id:uid(), front:c.front, back:c.back, needsReview:false}));
+        db.decks.push({ id:uid(), title:parsed.deckTitle||subjectLabel+" — Flashcards", subject:detail||"", cards, createdAt:Date.now() });
+        save(); logActivity();
+        closeModal();
+        toastQuota("Flashcard deck generated!");
+        renderDecksList();
+      }
+    }catch(e){
+      statusEl.textContent = "Couldn't generate: " + e.message;
+      goBtn.disabled = false;
+      document.getElementById("tg-cancel").disabled = false;
+    }
+  }
+
+  document.getElementById("btn-generate-all").addEventListener("click", ()=>openTopicModal("all"));
+  document.getElementById("btn-generate-note").addEventListener("click", ()=>openTopicModal("note"));
+  document.getElementById("btn-generate-quiz-topic").addEventListener("click", ()=>openTopicModal("quiz"));
+  document.getElementById("btn-generate-deck-topic").addEventListener("click", ()=>openTopicModal("deck"));
+
+  /* ==================================================
+     QUIZZES
+  ================================================== */
+  function renderQuizzesList(){
+    const wrap = document.getElementById("quizzes-list");
+    if(db.quizzes.length===0){
+      wrap.innerHTML = '<div class="empty"><strong>No quizzes yet</strong>Tap "Generate quiz" and give the AI a topic.</div>';
+      return;
+    }
+    wrap.innerHTML = [...db.quizzes].sort((a,b)=>b.createdAt-a.createdAt).map(q=>{
+      const bestScore = q.attempts.length ? Math.max(...q.attempts.map(a=>a.score)) : null;
+      return `
+      <div class="row-card" data-quiz="${q.id}">
+        <div>
+          <div class="row-title">${escapeHtml(q.title)}</div>
+          <div class="row-meta">${q.questions.length} questions ${bestScore!==null? "· best score "+bestScore+"%":"· not attempted"}</div>
+        </div>
+        <div class="row-actions">
+          <span class="tag">quiz</span>
+          <button class="row-delete-btn" data-delete-quiz="${q.id}" title="Delete quiz">🗑</button>
+        </div>
+      </div>`;
+    }).join("");
+    wrap.querySelectorAll("[data-quiz]").forEach(el=>{
+      el.addEventListener("click", ()=>startQuiz(el.dataset.quiz));
+    });
+    wrap.querySelectorAll("[data-delete-quiz]").forEach(el=>{
+      el.addEventListener("click", (e)=>{
+        e.stopPropagation();
+        if(!confirm("Delete this quiz? This can't be undone.")) return;
+        db.quizzes = db.quizzes.filter(q=>q.id!==el.dataset.deleteQuiz);
+        save();
+        renderQuizzesList();
+        toast("Quiz deleted");
+      });
+    });
+  }
+
+  document.getElementById("btn-new-quiz").addEventListener("click", ()=>{
+    openModal(`
+      <h2>New quiz</h2>
+      <div class="field"><label>Title</label><input type="text" id="m-quiz-title" placeholder="e.g. Cell Biology Ch. 3"></div>
+      <div class="field"><label>Question</label><input type="text" id="m-q-text" placeholder="Your question"></div>
+      <div class="field"><label>Option A</label><input type="text" id="m-opt-a"></div>
+      <div class="field"><label>Option B</label><input type="text" id="m-opt-b"></div>
+      <div class="field"><label>Option C</label><input type="text" id="m-opt-c"></div>
+      <div class="field"><label>Option D</label><input type="text" id="m-opt-d"></div>
+      <div class="field"><label>Correct option</label>
+        <select id="m-correct"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select>
+      </div>
+      <p style="font-size:12px;color:var(--text-muted);">You can add more questions after creating the quiz.</p>
+      <div class="modal-actions">
+        <button class="btn" id="m-cancel">Cancel</button>
+        <button class="btn btn-primary" id="m-create">Create quiz</button>
+      </div>
+    `);
+    document.getElementById("m-cancel").addEventListener("click", closeModal);
+    document.getElementById("m-create").addEventListener("click", ()=>{
+      const title = document.getElementById("m-quiz-title").value.trim() || "Untitled quiz";
+      const qtext = document.getElementById("m-q-text").value.trim();
+      const opts = ["m-opt-a","m-opt-b","m-opt-c","m-opt-d"].map(id=>document.getElementById(id).value.trim());
+      if(!qtext || opts.some(o=>!o)){ toast("Fill in the question and all 4 options"); return; }
+      const correctIndex = parseInt(document.getElementById("m-correct").value,10);
+      const quiz = { id:uid(), title, subject:"", questions:[{question:qtext, options:opts, correctIndex}], attempts:[], createdAt:Date.now() };
+      db.quizzes.push(quiz); save(); logActivity();
+      closeModal(); renderQuizzesList();
+      toast("Quiz created");
+    });
+  });
+
+  function startQuiz(quizId){
+    const quiz = db.quizzes.find(q=>q.id===quizId);
+    if(!quiz) return;
+    let idx = 0, correct = 0, answered = false;
+
+    function renderQ(){
+      const q = quiz.questions[idx];
+      openModal(`
+        <div class="qz-progress">Question ${idx+1} of ${quiz.questions.length}</div>
+        <div class="qz-question">${escapeHtml(q.question)}</div>
+        <div id="qz-opts"></div>
+        <div class="modal-actions">
+          <button class="btn" id="qz-quit">Quit</button>
+          <button class="btn btn-primary" id="qz-next" style="display:none;">Next</button>
+        </div>
+      `);
+      const optsWrap = document.getElementById("qz-opts");
+      q.options.forEach((opt,i)=>{
+        const b = document.createElement("button");
+        b.className = "qz-opt";
+        b.textContent = opt;
+        b.addEventListener("click", ()=>{
+          if(answered) return;
+          answered = true;
+          [...optsWrap.children].forEach((c,ci)=>{
+            if(ci===q.correctIndex) c.classList.add("correct");
+            else if(ci===i) c.classList.add("wrong");
+          });
+          if(i===q.correctIndex) correct++;
+          document.getElementById("qz-next").style.display = "inline-flex";
+        });
+        optsWrap.appendChild(b);
+      });
+      document.getElementById("qz-quit").addEventListener("click", closeModal);
+      document.getElementById("qz-next").addEventListener("click", ()=>{
+        answered = false;
+        idx++;
+        if(idx < quiz.questions.length) renderQ();
+        else finish();
+      });
+    }
+    function finish(){
+      const score = Math.round((correct/quiz.questions.length)*100);
+      quiz.attempts.push({ score, date:Date.now() });
+      save(); logActivity();
+      openModal(`
+        <h2>Score: ${score}%</h2>
+        <p style="color:var(--text-muted);">You got ${correct} of ${quiz.questions.length} correct.</p>
+        <div class="modal-actions">
+          <button class="btn btn-primary" id="qz-done">Done</button>
+        </div>
+      `);
+      document.getElementById("qz-done").addEventListener("click", ()=>{ closeModal(); renderQuizzesList(); });
+    }
+    renderQ();
+  }
+
+  /* ==================================================
+     FLASHCARDS
+  ================================================== */
+  function renderDecksList(){
+    const wrap = document.getElementById("decks-list");
+    if(db.decks.length===0){
+      wrap.innerHTML = '<div class="empty"><strong>No decks yet</strong>Tap "Generate deck" and give the AI a topic.</div>';
+      return;
+    }
+    wrap.innerHTML = [...db.decks].sort((a,b)=>b.createdAt-a.createdAt).map(d=>`
+      <div class="row-card" data-deck="${d.id}">
+        <div>
+          <div class="row-title">${escapeHtml(d.title)}</div>
+          <div class="row-meta">${d.cards.length} cards</div>
+        </div>
+        <div class="row-actions">
+          <span class="tag">deck</span>
+          <button class="row-delete-btn" data-delete-deck="${d.id}" title="Delete deck">🗑</button>
+        </div>
+      </div>
+    `).join("");
+    wrap.querySelectorAll("[data-deck]").forEach(el=>{
+      el.addEventListener("click", ()=>studyDeck(el.dataset.deck));
+    });
+    wrap.querySelectorAll("[data-delete-deck]").forEach(el=>{
+      el.addEventListener("click", (e)=>{
+        e.stopPropagation();
+        if(!confirm("Delete this deck? This can't be undone.")) return;
+        db.decks = db.decks.filter(d=>d.id!==el.dataset.deleteDeck);
+        save();
+        renderDecksList();
+        toast("Deck deleted");
+      });
+    });
+  }
+
+  document.getElementById("btn-new-deck").addEventListener("click", ()=>{
+    openModal(`
+      <h2>New deck</h2>
+      <div class="field"><label>Deck title</label><input type="text" id="m-deck-title" placeholder="e.g. Spanish Vocab"></div>
+      <div class="field"><label>Front (term/question)</label><input type="text" id="m-card-front"></div>
+      <div class="field"><label>Back (answer)</label><input type="text" id="m-card-back"></div>
+      <p style="font-size:12px;color:var(--text-muted);">You can add more cards after creating the deck.</p>
+      <div class="modal-actions">
+        <button class="btn" id="m-cancel">Cancel</button>
+        <button class="btn btn-primary" id="m-create">Create deck</button>
+      </div>
+    `);
+    document.getElementById("m-cancel").addEventListener("click", closeModal);
+    document.getElementById("m-create").addEventListener("click", ()=>{
+      const title = document.getElementById("m-deck-title").value.trim() || "Untitled deck";
+      const front = document.getElementById("m-card-front").value.trim();
+      const back = document.getElementById("m-card-back").value.trim();
+      if(!front || !back){ toast("Fill in both sides of the card"); return; }
+      const deck = { id:uid(), title, subject:"", cards:[{id:uid(),front,back,needsReview:false}], createdAt:Date.now() };
+      db.decks.push(deck); save(); logActivity();
+      closeModal(); renderDecksList();
+      toast("Deck created");
+    });
+  });
+
+  function studyDeck(deckId){
+    const deck = db.decks.find(d=>d.id===deckId);
+    if(!deck) return;
+    let idx = 0, flipped = false, reviewCount = 0;
+
+    function renderCard(){
+      const c = deck.cards[idx];
+      flipped = false;
+      openModal(`
+        <div class="qz-progress">Card ${idx+1} of ${deck.cards.length}</div>
+        <div class="fc-stage">
+          <div class="fc-card-wrap">
+            <div class="fc-flip" id="fc-flip-inner">
+              <div class="fc-face fc-face-front"><div><div class="fc-face-label">FRONT</div>${escapeHtml(c.front)}</div></div>
+              <div class="fc-face fc-face-back"><div><div class="fc-face-label">BACK</div>${escapeHtml(c.back)}</div></div>
+            </div>
+          </div>
+          <div class="fc-controls">
+            <button class="btn btn-danger btn-sm" id="fc-review">Need review</button>
+            <button class="btn btn-sm" id="fc-flip">Flip</button>
+            <button class="btn btn-primary btn-sm" id="fc-got">Got it</button>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn" id="fc-quit">Quit</button>
+        </div>
+      `);
+      const flipEl = document.getElementById("fc-flip-inner");
+      const doFlip = ()=>{ flipped = !flipped; flipEl.classList.toggle("flipped", flipped); };
+      document.getElementById("fc-flip").addEventListener("click", doFlip);
+      flipEl.addEventListener("click", doFlip);
+      document.getElementById("fc-got").addEventListener("click", ()=>{ c.needsReview=false; advance(); });
+      document.getElementById("fc-review").addEventListener("click", ()=>{ c.needsReview=true; reviewCount++; advance(); });
+      document.getElementById("fc-quit").addEventListener("click", ()=>{ save(); closeModal(); });
+    }
+    function advance(){
+      idx++;
+      if(idx < deck.cards.length) renderCard();
+      else{
+        save(); logActivity();
+        openModal(`
+          <h2>Deck complete</h2>
+          <p style="color:var(--text-muted);">${reviewCount} card${reviewCount===1?"":"s"} marked for review.</p>
+          <div class="modal-actions"><button class="btn btn-primary" id="fc-done">Done</button></div>
+        `);
+        document.getElementById("fc-done").addEventListener("click", ()=>{ closeModal(); renderDecksList(); });
+      }
+    }
+    renderCard();
+  }
+
+  /* ==================================================
+     SETTINGS
+  ================================================== */
+  function renderSettings(){
+    document.getElementById("settings-status").textContent = "";
+    const usageBlock = document.getElementById("usage-block");
+    const cached = getUsageCache();
+    const pct = cached ? Math.min(100, Math.max(2, Math.round(((cached.limit - cached.remaining) / cached.limit) * 100))) : 0;
+    const fillClass = pct >= 80 ? "usage-high" : (pct >= 50 ? "usage-mid" : "");
+    const debugMsg = localStorage.getItem("studyhub_usage_debug");
+    usageBlock.innerHTML = `
+      <div class="usage-bar-label">Today's AI usage</div>
+      <div class="usage-bar-track"><div class="usage-bar-fill ${fillClass}" style="width:${pct}%;"></div></div>
+      ${debugMsg ? `<p style="font-size:11px;color:var(--danger);margin:8px 0 0;">Usage tracking issue: ${escapeHtml(debugMsg)}</p>` : ""}
+    `;
+  }
+  document.getElementById("btn-test-key").addEventListener("click", async ()=>{
+    const statusEl = document.getElementById("settings-status");
+    statusEl.textContent = "Testing…";
+    statusEl.className = "";
+    try{
+      await callGemini('Reply with exactly the single word: OK');
+      statusEl.textContent = "Connected — AI generation is working.";
+      statusEl.className = "status-ok";
+    }catch(e){
+      statusEl.textContent = "Connection failed: " + e.message;
+      statusEl.className = "status-bad";
+    }
+  });
+  document.getElementById("btn-clear-data").addEventListener("click", ()=>{
+    if(!confirm("This will erase all notes, quizzes and flashcards on this device. Continue?")) return;
+    localStorage.removeItem(DB_KEY);
+    db = loadDB();
+    renderDashboard(); renderNotesList(); renderQuizzesList(); renderDecksList(); renderSettings();
+    toast("All data erased");
+  });
+
+  /* ---------------- Init ---------------- */
+  renderDashboard();
+})();
+</script>
+</body>
+</html>
